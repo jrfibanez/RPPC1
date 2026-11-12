@@ -1,0 +1,43 @@
+{
+  "name": "rppc-ops",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:start": "supabase start -x imgproxy,postgres-meta,vector,logflare,supavisor,mailpit && node scripts/write-env.mjs",
+    "db:reset": "supabase db reset && tsx scripts/seed.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:rls": "vitest run tests/rls",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
+    "idb": "^8.0.4",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^18.0.10",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "pg": "^8.23.1",
+    "supabase": "^3.1.0",
+    "tailwindcss": "4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.1.0"
+  }
+}
