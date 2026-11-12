@@ -8,6 +8,9 @@ import { ROLES, firstIssue, userSchema } from '@/lib/validation/schemas';
 const back = (error: string): never => redirect('/admin/users?error=' + encodeURIComponent(error));
 
 /** Every action here re-checks admin.users before the master key is used. */
+const NO_KEY = 'Creating logins and changing passwords needs the server key (SUPABASE_SERVICE_ROLE_KEY), which is not set on this site yet.';
+const hasKey = () => !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 async function requireAdmin() {
   const session = await getSession();
   if (!session.can('admin.users')) back('You are not allowed to do this.');
@@ -18,6 +21,7 @@ export async function createUserAction(form: FormData) {
   const { supabase } = await requireAdmin();
   const parsed = userSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return back(firstIssue(parsed.error));
+  if (!hasKey()) return back(NO_KEY);
   const admin = createAdminClient();
   let email = parsed.data.email;
   if (!email) {
@@ -42,7 +46,8 @@ export async function updateUserAction(form: FormData) {
   const { data, error } = await supabase.from('profiles').update({ role: parsed.data.role, is_active: active }).eq('id', parsed.data.id).select('id');
   if (error || !data?.length) return back(error ? explain(error) : 'You are not allowed to do this.');
   // Turning an account off also blocks its login and ends its sessions.
-  await createAdminClient().auth.admin.updateUserById(parsed.data.id, { ban_duration: active ? 'none' : '876000h' });
+  // (Even without this step, a turned-off account can read and change nothing: the database refuses it.)
+  if (hasKey()) await createAdminClient().auth.admin.updateUserById(parsed.data.id, { ban_duration: active ? 'none' : '876000h' });
   redirect('/admin/users?notice=Saved');
 }
 
@@ -50,6 +55,7 @@ export async function resetPasswordAction(form: FormData) {
   await requireAdmin();
   const parsed = z.object({ id: z.string().uuid(), password: z.string().min(8) }).safeParse(Object.fromEntries(form));
   if (!parsed.success) return back('The new password must be at least 8 characters.');
+  if (!hasKey()) return back(NO_KEY);
   const { error } = await createAdminClient().auth.admin.updateUserById(parsed.data.id, { password: parsed.data.password });
   if (error) return back(error.message);
   redirect('/admin/users?notice=Password+changed');
