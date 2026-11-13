@@ -70,7 +70,11 @@ const tag = Math.random().toString(36).slice(2, 8);
     viewport: { width: 390, height: 844 }, permissions: ['geolocation', 'camera'], geolocation: { latitude: 14.3306, longitude: 121.0835, accuracy: 9 },
   });
   await page.goto('/field');
-  if (await page.getByRole('button', { name: 'Clock out' }).count()) { await page.click('text=Clock out'); await page.waitForSelector('text=You are not clocked in.'); }
+  await page.waitForSelector('text=Location on');
+  if (await page.getByRole('button', { name: 'Clock out' }).count()) {
+    await page.getByRole('button', { name: 'Clock out' }).click({ noWaitAfter: true }).catch(() => {});
+    await page.waitForSelector('text=You are not clocked in.');
+  }
   await page.getByRole('button', { name: 'Clock in' }).click();
   await page.waitForSelector('text=On shift since');
   check('clock in works on the phone screen', true);
@@ -93,6 +97,14 @@ const tag = Math.random().toString(36).slice(2, 8);
   // The app sends by itself as soon as the phone is back online.
   await page.waitForSelector('text=Not yet sent', { state: 'detached', timeout: 15000 });
   check('queued clock-out is sent when signal returns', true);
+  await ctx.close();
+}
+// --- Phone with location blocked: nothing can be recorded ---------------------------
+{
+  const { ctx, page } = await session('sales1@rppc.test', { viewport: { width: 390, height: 844 }, permissions: [] });
+  await page.goto('/field');
+  await page.waitForSelector('text=Location is turned off for this site.');
+  check('with location blocked, clock and visit buttons are disabled', await page.getByRole('button', { name: /Clock (in|out)/ }).isDisabled() && await page.getByRole('button', { name: 'Log client visit' }).isDisabled());
   await ctx.close();
 }
 // --- Admin: everything, attendance, audit, void ----------------------------------

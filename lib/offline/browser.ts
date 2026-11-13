@@ -25,19 +25,7 @@ async function send(item: QueueItem<FieldItem>): Promise<SendResult> {
 
 export const fieldQueue = createQueue<FieldItem>(idbStore, send);
 
-export type Gps = { lat: number | null; lng: number | null; accuracy_m: number | null };
-
-export function getGps(timeoutMs = 10_000): Promise<Gps> {
-  const none = { lat: null, lng: null, accuracy_m: null };
-  return new Promise((resolve) => {
-    if (!('geolocation' in navigator)) return resolve(none);
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy_m: Math.round(p.coords.accuracy) }),
-      () => resolve(none),
-      { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 30_000 },
-    );
-  });
-}
+export type Gps = { lat: number; lng: number; accuracy_m: number | null };
 
 /** Shrinks a camera frame to 1280 px and writes date, time and GPS onto the picture. */
 export async function stampedJpeg(source: HTMLVideoElement, at: Date, gps: Gps): Promise<Blob> {
@@ -48,7 +36,7 @@ export async function stampedJpeg(source: HTMLVideoElement, at: Date, gps: Gps):
   const ctx = canvas.getContext('2d')!;
   ctx.drawImage(source, 0, 0, w, h);
   const when = new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'medium' }).format(at);
-  const where = gps.lat != null && gps.lng != null ? `GPS ${gps.lat.toFixed(6)}, ${gps.lng.toFixed(6)} (±${gps.accuracy_m ?? '?'} m)` : 'GPS not available';
+  const where = `GPS ${gps.lat.toFixed(6)}, ${gps.lng.toFixed(6)} (±${gps.accuracy_m ?? '?'} m)`;
   const size = Math.max(14, Math.round(w / 40));
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
   ctx.fillRect(0, h - size * 3.2, w, size * 3.2);

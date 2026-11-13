@@ -3,6 +3,25 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import { summarizeBacklog } from '@/lib/domain/aging';
 
+const Stat = ({ label, n, href, warn }: { label: string; n: number; href: string; warn?: boolean }) => (
+  <Link href={href} className="card block hover:border-brand">
+    <div className={`text-3xl font-bold ${warn && n > 0 ? 'text-brand' : 'text-ink'}`}>{n}</div>
+    <div className="text-sm text-stone-600">{label}</div>
+  </Link>
+);
+const List = ({ title, rows }: { title: string; rows: (readonly [string, number])[] }) => (
+  <div className="card">
+    <h2 className="h2 mb-2">{title}</h2>
+    {rows.length === 0 && <p className="text-sm text-stone-500">No open tickets.</p>}
+    <ul className="divide-y divide-stone-100">
+      {rows.slice(0, 12).map(([k, n]) => (
+        <li key={k} className="flex justify-between py-1.5 text-sm"><span>{k}</span><span className="font-semibold">{n}</span></li>
+      ))}
+    </ul>
+  </div>
+);
+
+
 export default async function Dashboard() {
   const { supabase, user, can } = await getSession();
   if (!can('tickets.read_all') && !can('tickets.read_own')) {
@@ -23,24 +42,6 @@ export default async function Dashboard() {
     status: t.status, createdAt: new Date(t.created_at), dueAt: t.due_at ? new Date(t.due_at) : null,
     owner: one(t.owner)?.full_name ?? null, client: one(t.client)?.name ?? null, category: one(t.category)?.name ?? null,
   })), new Date());
-
-  const Stat = ({ label, n, href, warn }: { label: string; n: number; href: string; warn?: boolean }) => (
-    <Link href={href} className="card block hover:border-brand">
-      <div className={`text-3xl font-bold ${warn && n > 0 ? 'text-brand' : 'text-ink'}`}>{n}</div>
-      <div className="text-sm text-stone-600">{label}</div>
-    </Link>
-  );
-  const List = ({ title, rows }: { title: string; rows: (readonly [string, number])[] }) => (
-    <div className="card">
-      <h2 className="h2 mb-2">{title}</h2>
-      {rows.length === 0 && <p className="text-sm text-stone-500">No open tickets.</p>}
-      <ul className="divide-y divide-stone-100">
-        {rows.slice(0, 12).map(([k, n]) => (
-          <li key={k} className="flex justify-between py-1.5 text-sm"><span>{k}</span><span className="font-semibold">{n}</span></li>
-        ))}
-      </ul>
-    </div>
-  );
 
   return (
     <>

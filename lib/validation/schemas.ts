@@ -46,8 +46,10 @@ export const userSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
+// Location is required on every field record. Accuracy may be missing on some phones.
 const gps = {
-  lat: z.number().min(-90).max(90).nullable(), lng: z.number().min(-180).max(180).nullable(),
+  lat: z.number({ message: 'Location is required' }).min(-90).max(90),
+  lng: z.number({ message: 'Location is required' }).min(-180).max(180),
   accuracy_m: z.number().min(0).nullable(),
 };
 export const fieldItemSchema = z.discriminatedUnion('kind', [

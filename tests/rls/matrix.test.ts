@@ -28,12 +28,12 @@ async function build() {
     mime_type: 'image/png', size_bytes: 10, uploaded_by: acct.ownerId,
   }).select().single());
   const shift = ok(await service.from('attendance_logs').insert({
-    user_id: acct.ownerId, clock_in_at: '2026-01-05T00:00:00Z', clock_out_at: '2026-01-05T09:00:00Z',
+    user_id: acct.ownerId, clock_in_at: '2026-01-05T00:00:00Z', clock_out_at: '2026-01-05T09:00:00Z', in_lat: 14.33, in_lng: 121.08,
   }).select().single());
   const visitId = crypto.randomUUID();
   const visit = ok(await service.from('client_visits').insert({
     id: visitId, user_id: acct.ownerId, client_id: acct.client.id, purpose: 'Fixture',
-    photo_path: `${acct.ownerId}/${visitId}.jpg`, captured_at: '2026-01-05T02:00:00Z',
+    photo_path: `${acct.ownerId}/${visitId}.jpg`, captured_at: '2026-01-05T02:00:00Z', lat: 14.33, lng: 121.08,
   }).select().single());
   const category = ok(await service.from('ticket_categories').insert({ name: `Cat ${tag()}` }).select().single());
   return { ...acct, comment, attachment, shift, visit, category };
@@ -72,13 +72,13 @@ const SPECS: Spec[] = [
   },
   {
     table: 'attendance_logs', fixtureId: (f) => f.shift.id, read: FIELD_READERS, insert: ['sales'], update: [],
-    patch: null, row: ({ uid }) => ({ user_id: uid, clock_in_at: new Date().toISOString() }),
+    patch: null, row: ({ uid }) => ({ user_id: uid, clock_in_at: new Date().toISOString(), in_lat: 14.33, in_lng: 121.08 }),
     beforeInsert: ({ uid }) => closeOpenShifts(uid),
   },
   {
     table: 'client_visits', fixtureId: (f) => f.visit.id, read: FIELD_READERS, insert: ['sales'], update: [],
     patch: { notes: 'Edited' },
-    row: ({ fx, uid }) => { const id = crypto.randomUUID(); return { id, user_id: uid, client_id: fx.client.id, purpose: 'Matrix', photo_path: `${uid}/${id}.jpg`, captured_at: new Date().toISOString() }; },
+    row: ({ fx, uid }) => { const id = crypto.randomUUID(); return { id, user_id: uid, client_id: fx.client.id, purpose: 'Matrix', photo_path: `${uid}/${id}.jpg`, captured_at: new Date().toISOString(), lat: 14.33, lng: 121.08 }; },
   },
 ];
 

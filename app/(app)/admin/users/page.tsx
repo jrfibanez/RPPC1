@@ -4,14 +4,15 @@ import { Alert, PageHeader } from '@/components/ui';
 import { ROLES } from '@/lib/validation/schemas';
 import { createUserAction, resetPasswordAction, updateUserAction } from './actions';
 
+const RoleSelect = ({ value }: { value?: string }) => (
+  <select className="input" name="role" defaultValue={value ?? 'sales'}>{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r as Role]}</option>)}</select>
+);
+
 export default async function UsersPage({ searchParams }: { searchParams: Promise<{ error?: string; notice?: string }> }) {
   const { error, notice } = await searchParams;
   const { supabase, user, can } = await getSession();
   if (!can('admin.users')) redirect('/');
   const { data: users } = await supabase.from('profiles').select('*').order('full_name');
-  const RoleSelect = ({ value }: { value?: string }) => (
-    <select className="input" name="role" defaultValue={value ?? 'sales'}>{ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r as Role]}</option>)}</select>
-  );
   return (
     <>
       <PageHeader title="Users" />
